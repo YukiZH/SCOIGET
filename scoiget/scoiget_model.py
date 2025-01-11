@@ -8,7 +8,7 @@ import numpy as np
 from torch_scatter import scatter_mean
 
 
-# Encoder 模块
+# Encoder module
 class Encoder(nn.Module):
     def __init__(self, in_channels, hidden_channels, out_channels, heads=8, dropout=0.0):
         super(Encoder, self).__init__()
@@ -41,7 +41,7 @@ class Encoder(nn.Module):
         return z_mean, z_var, x
 
 
-# Decoder 模块
+# Decoder module
 class Decoder(nn.Module):
     def __init__(self, latent_dim, intermediate_dim, original_dim):
         super(Decoder, self).__init__()
@@ -55,7 +55,7 @@ class Decoder(nn.Module):
         return self.decoder_nn(x)
 
 
-# CNEncoder 模块（增加edge_index作为参数，并对HMM states进行空间平滑）
+# CNEncoder module (includes edge_index for spatial smoothing of HMM states)
 class CNEncoder(nn.Module):
     def __init__(self, original_dim, num_states=3, max_iters=20):
         super(CNEncoder, self).__init__()
@@ -70,7 +70,7 @@ class CNEncoder(nn.Module):
         norm_x = norm_x.to(device)
         reconstructed_features = reconstructed_features.to(device)
 
-        # HMM建模
+        # HMM modeling
         spot_mean = reconstructed_features.mean(dim=1, keepdim=True).detach().cpu().numpy()
         spot_mean = spot_mean.astype(np.float64)
         spot_mean = (spot_mean - spot_mean.mean()) / (spot_mean.std() + 1e-8)
@@ -79,7 +79,7 @@ class CNEncoder(nn.Module):
             n_components=self.num_states,
             covariance_type="diag",
             n_iter=500,
-            init_params=""  # 禁用自动初始化
+            init_params=""  # Disable automatic initialization
         )
 
         t = 0.01
@@ -110,7 +110,7 @@ class CNEncoder(nn.Module):
                 print("HMM training encountered an error:", e)
                 states = np.ones((spot_mean.shape[0],), dtype=int)
 
-            # M 步骤更新HMM参数
+            # M-step updates for HMM parameters
             hmm_model.means_ = np.array([
                 np.mean(spot_mean[states == s], axis=0) if np.any(states == s) else np.mean(spot_mean, axis=0)
                 for s in range(self.num_states)
@@ -121,51 +121,51 @@ class CNEncoder(nn.Module):
                 for s in range(self.num_states)
             ], dtype=np.float64).reshape(-1, 1)
 
-        # 状态张量
+        # Convert states to a tensor
         states_tensor = torch.tensor(states + 1, dtype=torch.float32, device=device).reshape(-1, 1)
 
-        # 对states进行空间平滑处理
-        # edge_index: [2, E], row和col分别是边的起点和终点
+        # Apply spatial smoothing to states
+        # edge_index: [2, E], row and col represent edge start and end points
         row, col = edge_index
         states_tensor_per_node = states_tensor.squeeze(-1)  # [N]
 
-        # 对每个节点, 根据邻居节点的状态求平均
+        # Compute neighbor average states for each node
         neighbor_avg_states = scatter_mean(states_tensor_per_node[row], col, dim=0, dim_size=states_tensor.size(0))
-        # 将节点状态与其邻居平均状态做混合(0.5:0.5比重)
+        # Blend node states with neighbor average states (0.5:0.5 weighting)
         smoothed_states = 0.5 * states_tensor_per_node + 0.5 * neighbor_avg_states
         smoothed_states = smoothed_states.unsqueeze(-1)  # [N, 1]
 
-        # 后续用平滑后的states计算拷贝数
+        # Compute copy number adjusted by smoothed states
         state_adjusted_copy = reconstructed_features * smoothed_states
         copy_sum = state_adjusted_copy.sum(dim=1, keepdim=True)
 
-        # 归一化
+        # Normalize
         pseudo_sum = norm_x.sum(dim=1, keepdim=True)
         norm_copy = state_adjusted_copy / (copy_sum + 1e-8) * pseudo_sum
 
-        # 动态范围缩放
+        # Dynamic range scaling
         range_min, range_max = norm_copy.min().item() * 0.8, norm_copy.max().item() * 1.2
         norm_copy = (norm_copy - norm_copy.min()) / (norm_copy.max() - norm_copy.min() + 1e-8)
         norm_copy = norm_copy * (range_max - range_min) + range_min
 
-        # 调整均值到 1
+        # Adjust mean to 1
         current_mean = norm_copy.mean()
         norm_copy = norm_copy / current_mean
         
-        # 正则化损失
+        # Regularization loss
         reg_loss = torch.sum(reconstructed_features ** 2) * 1e-4
 
         return norm_copy, reg_loss
 
 
-# SCOIGET 模型
+# SCOIGET model
 class SCOIGET(nn.Module):
     def __init__(self, original_dim, intermediate_dim=128, latent_dim=32, max_cp=25, kl_weights=0.5, dropout=0.0, hmm_states=3, max_iters=20, gnn_heads=8, lambda_smooth=0.1, device='cpu'):
         super(SCOIGET, self).__init__()
         self.device = device
         self.max_cp = max_cp
         self.kl_weights = kl_weights
-        self.lambda_smooth = lambda_smooth  # 空间平滑正则项系数
+        self.lambda_smooth = lambda_smooth  # Regularization weight for spatial smoothing
 
         self.z_encoder = Encoder(original_dim, intermediate_dim, latent_dim, heads=gnn_heads, dropout=dropout).to(self.device)
         self.decoder = Decoder(latent_dim, intermediate_dim, original_dim).to(self.device)
@@ -176,10 +176,10 @@ class SCOIGET(nn.Module):
         z_mean, z_var, z = self.z_encoder(inputs, edge_index)
         reconstructed_features = self.decoder(z)
         
-        # 传入edge_index进行CNEncoder的计算，以对states进行空间平滑
+        # Pass edge_index to CNEncoder for spatial smoothing
         norm_copy, reg_loss = self.encoder([inputs, reconstructed_features], edge_index)
 
-        # KL 散度损失
+        # KL divergence loss
         p_dis = torch.distributions.Normal(loc=z_mean, scale=torch.sqrt(z_var))
         q_dis = torch.distributions.Normal(loc=torch.zeros_like(z_mean), scale=torch.ones_like(z_var))
         kl_loss = torch.sum(torch.distributions.kl_divergence(p_dis, q_dis), dim=1) * self.kl_weights
@@ -192,7 +192,7 @@ class SCOIGET(nn.Module):
         norm_copy, reconstructed_features, kl_loss, reg_loss = self(data, edge_index, edge_attr)
         recon_loss = F.mse_loss(reconstructed_features, data, reduction='mean')
 
-        # 添加空间平滑损失项
+        # Add spatial smoothing loss term
         row, col = edge_index
         spatial_smooth_loss = F.mse_loss(norm_copy[row], norm_copy[col])
 
@@ -207,7 +207,7 @@ class SCOIGET(nn.Module):
             norm_copy, reconstructed_features, kl_loss, reg_loss = self(data, edge_index, edge_attr)
             recon_loss = F.mse_loss(reconstructed_features, data, reduction='mean')
             
-            # 验证集上同样计算空间平滑但不反传
+            # Compute spatial smoothing in validation without backpropagation
             row, col = edge_index
             spatial_smooth_loss = F.mse_loss(norm_copy[row], norm_copy[col])
             
