@@ -27,7 +27,7 @@ pytorch==2.2.2
 ### Cloning the Repository and Preparing the Environment
 Actual installation time depends on network conditions and takes about 15 minutes.
 
-1. Clone the Repository:
+#### 1. Clone the Repository:
 ```
 git clone https://github.com/YukiZH/SCOIGET.git
 cd STAIG
@@ -38,7 +38,7 @@ wget https://github.com/YukiZH/SCOIGET/archive/refs/heads/main.zip
 unzip main.zip
 cd /home/.../SCOIGET-main  ### your own path
 ```
-2. Create and Activate the Environment:
+#### 2. Create and Activate the Environment:
 ```
 conda create -n scoiget_env python=3.8
 conda activate scoiget_env
