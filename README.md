@@ -43,17 +43,17 @@ cd /home/.../SCOIGET-main  ### your own path
 conda create -n scoiget_env python=3.8.20
 conda activate scoiget_env
 
-## step1 Installing PyTorch 
+## Step1: Installing PyTorch 
 # For GPU (CUDA 12.1)
 pip install torch==2.2.2+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
 
-## step2 Installing Pyg
+## Step2: Installing Pyg
 pip install torch-scatter==2.1.2+pt22cu121 --extra-index-url https://download.pytorch.org/whl/cu121
 pip install torch-sparse==0.6.18+pt22cu121 --extra-index-url https://download.pytorch.org/whl/cu121
 pip install torch-cluster==1.6.3+pt22cu121 --extra-index-url https://download.pytorch.org/whl/cu121
 pip install torch-geometric==2.5.2
    
-## step3 Download other dependencies
+## Step3: Download other dependencies
 pip install -r requirements.txt
 ```
 
