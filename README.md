@@ -30,7 +30,7 @@ Actual installation time depends on network conditions and takes about 15 minute
 #### 1. Clone the Repository:
 ```
 git clone https://github.com/YukiZH/SCOIGET.git
-cd STAIG
+cd SCOIGET
 ```
 or download the code:
 ```
