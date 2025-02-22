@@ -21,7 +21,7 @@ SCOIGET: A Tool for Predicting Spatial Tumor Evolution Pattern by Inferring Spat
 This section details the steps to set up the project environment using Anaconda.
 
 ### Prerequisites
-Python 3.10.11
+Python 3.8.20
 pytorch==2.2.2
 
 ### Cloning the Repository and Preparing the Environment
@@ -40,17 +40,19 @@ cd /home/.../SCOIGET-main  ### your own path
 ```
 #### 2. Create and Activate the Environment:
 ```
-conda create -n scoiget_env python=3.8
+conda create -n scoiget_env python=3.8.20
 conda activate scoiget_env
 
 ## step1 Installing PyTorch 
 # For GPU (CUDA 12.1)
-conda install pytorch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 pytorch-cuda=12.1 -c pytorch -c nvidia
+pip install torch==2.2.2+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
 
 ## step2 Installing Pyg
-conda install pyg=*=*cu* -c pyg
+pip install torch-scatter==2.1.2+pt22cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+pip install torch-sparse==0.6.18+pt22cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+pip install torch-cluster==1.6.3+pt22cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+pip install torch-geometric==2.5.2
    
 ## step3 Download other dependencies
 pip install -r requirements.txt
 ```
-
