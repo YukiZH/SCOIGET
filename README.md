@@ -56,3 +56,8 @@ pip install torch-geometric==2.5.2
 ## step3 Download other dependencies
 pip install -r requirements.txt
 ```
+
+### License
+This project is covered under the Apache 2.0 License.
+
+
