@@ -9,9 +9,9 @@ SCOIGET: A Tool for Predicting Spatial Tumor Evolution Pattern by Inferring Spat
 ## Overview
 **SCOIGET** (**S**patial **CO**py number **I**nference by **G**raph on **E**volution of **T**umor) is a groundbreaking framework designed to decode tumor heterogeneity by constructing comprehensive spatiotemporal maps through spatial omics data. Traditional methods, primarily developed for single-cell analysis, overlook critical spatial information, limiting their ability to capture tumor evolution dynamics. SCOIGET addresses this gap by integrating graph neural networks (GNNs) with graph attention layers to model spatial neighborhood features of gene expression and infer copy number variations (CNVs).
 
-Key innovations include:
-**· Spatiotemporal Integration**: Combines spatial multi-omics features to map tumor evolution with unprecedented resolution.
-**· Enhanced Accuracy**: Achieves significant reductions in error metrics (e.g., mean squared error) and superior clustering performance (higher Silhouette Scores) compared to existing tools.
+Key innovations include:  
+**· Spatiotemporal Integration**: Combines spatial multi-omics features to map tumor evolution with unprecedented resolution.  
+**· Enhanced Accuracy**: Achieves significant reductions in error metrics (e.g., mean squared error) and superior clustering performance (higher Silhouette Scores) compared to existing tools.  
 **· Generalizability**: Robust across diverse spatial omics technologies (e.g., Visium, VisiumHD) and cancer types, enabling versatile applications in downstream analyses.
 
 By elucidating spatial and temporal changes within the tumor microenvironment, SCOIGET enhances the precision of tumor evolution modeling and accelerates insights into cancer progression. This tool empowers researchers to uncover actionable biomarkers and design personalized therapeutic strategies, bridging the gap between spatial omics innovation and clinical translation.
