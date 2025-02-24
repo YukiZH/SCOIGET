@@ -8,7 +8,7 @@ import numpy as np
 from torch_scatter import scatter_mean
 
 
-# Encoder module
+# Encoder 模块
 class Encoder(nn.Module):
     def __init__(self, in_channels, hidden_channels, out_channels, heads=8, dropout=0.0):
         super(Encoder, self).__init__()
@@ -41,7 +41,7 @@ class Encoder(nn.Module):
         return z_mean, z_var, x
 
 
-# Decoder module
+# Decoder 模块
 class Decoder(nn.Module):
     def __init__(self, latent_dim, intermediate_dim, original_dim):
         super(Decoder, self).__init__()
@@ -55,7 +55,12 @@ class Decoder(nn.Module):
         return self.decoder_nn(x)
 
 
-# CNEncoder module (includes edge_index for spatial smoothing of HMM states)
+# CNEncoder 模块（增加edge_index作为参数，并对HMM states进行空间平滑）
+import torch
+import numpy as np
+from torch_scatter import scatter_mean
+from torch import nn
+
 class CNEncoder(nn.Module):
     def __init__(self, original_dim, num_states=3, max_iters=20):
         super(CNEncoder, self).__init__()
@@ -63,109 +68,95 @@ class CNEncoder(nn.Module):
         self.max_iters = max_iters
 
     def forward(self, inputs, edge_index):
-        # inputs: [norm_x, reconstructed_features]
         norm_x, reconstructed_features = inputs
         device = reconstructed_features.device
 
         norm_x = norm_x.to(device)
         reconstructed_features = reconstructed_features.to(device)
 
-        # HMM modeling
+        # 数据预处理
         spot_mean = reconstructed_features.mean(dim=1, keepdim=True).detach().cpu().numpy()
-        spot_mean = spot_mean.astype(np.float64)
         spot_mean = (spot_mean - spot_mean.mean()) / (spot_mean.std() + 1e-8)
 
-        hmm_model = hmm.GaussianHMM(
-            n_components=self.num_states,
-            covariance_type="diag",
-            n_iter=500,
-            init_params=""  # Disable automatic initialization
-        )
+        # 初始化 MCMC 参数
+        num_samples = spot_mean.shape[0]
+        states = np.random.choice(self.num_states, size=num_samples)  # 初始状态
+        state_probs = np.zeros((num_samples, self.num_states))  # 状态后验概率
 
-        t = 0.01
-        hmm_model.startprob_ = np.array([0.1, 0.8, 0.1], dtype=np.float64)
-        hmm_model.transmat_ = np.array([
-            [1 - 2 * t, t, t],
-            [t, 1 - 2 * t, t],
-            [t, t, 1 - 2 * t]
-        ], dtype=np.float64)
+        # 定义先验概率和似然函数
+        state_prior = np.array([0.1, 0.8, 0.1])  # 初始状态分布
+        transition_matrix = np.array([
+            [0.98, 0.01, 0.01],
+            [0.01, 0.98, 0.01],
+            [0.01, 0.01, 0.98]
+        ])
 
-        quantiles = np.quantile(spot_mean, [0.2, 0.5, 0.8])
-        hmm_model.means_ = quantiles.reshape(-1, 1).astype(np.float64)
-        epsilon = 1e-4
-        hmm_model.covars_ = np.full((self.num_states, 1), np.var(spot_mean) + epsilon, dtype=np.float64)
+        def likelihood(state, mean):
+            mean = mean.detach().cpu().numpy()  # 使用 detach 分离梯度
+            diff = (spot_mean - mean[state]) ** 2
+            return np.exp(-0.5 * diff)
 
-        prev_log_likelihood = -np.inf
-        for i in range(self.max_iters):
-            try:
-                hmm_model.fit(spot_mean)
-                states = hmm_model.predict(spot_mean)
-                log_likelihood = hmm_model.score(spot_mean)
+        # MCMC 采样
+        for iter_idx in range(self.max_iters):
+            for i in range(num_samples):
+                current_state = states[i]
+                candidate_state = np.random.choice(self.num_states)  # 新状态
 
-                if np.abs(log_likelihood - prev_log_likelihood) < 1e-3:
-                    print(f"Converged at iteration {i}")
-                    break
-                prev_log_likelihood = log_likelihood
-            except Exception as e:
-                print("HMM training encountered an error:", e)
-                states = np.ones((spot_mean.shape[0],), dtype=int)
+                # 计算接受概率
+                prior_ratio = state_prior[candidate_state] / state_prior[current_state]
+                likelihood_ratio = np.sum(likelihood(candidate_state, reconstructed_features.mean(dim=1))) / \
+                                   np.sum(likelihood(current_state, reconstructed_features.mean(dim=1)))
+                transition_ratio = transition_matrix[current_state, candidate_state] / \
+                                   transition_matrix[candidate_state, current_state]
 
-            # M-step updates for HMM parameters
-            hmm_model.means_ = np.array([
-                np.mean(spot_mean[states == s], axis=0) if np.any(states == s) else np.mean(spot_mean, axis=0)
-                for s in range(self.num_states)
-            ], dtype=np.float64).reshape(-1, 1)
+                acceptance_prob = prior_ratio * likelihood_ratio * transition_ratio
 
-            hmm_model.covars_ = np.array([
-                np.var(spot_mean[states == s], axis=0) + epsilon if np.any(states == s) else np.var(spot_mean, axis=0) + epsilon
-                for s in range(self.num_states)
-            ], dtype=np.float64).reshape(-1, 1)
+                # 确保接受概率是标量
+                if np.random.rand() < float(acceptance_prob):
+                    states[i] = candidate_state  # 接受新状态
 
-        # Convert states to a tensor
-        states_tensor = torch.tensor(states + 1, dtype=torch.float32, device=device).reshape(-1, 1)
+                state_probs[i, states[i]] += 1  # 更新状态概率分布
 
-        # Apply spatial smoothing to states
-        # edge_index: [2, E], row and col represent edge start and end points
+        # 平滑后验概率
         row, col = edge_index
-        states_tensor_per_node = states_tensor.squeeze(-1)  # [N]
+        state_probs_tensor = torch.tensor(state_probs, device=device, dtype=torch.float32)
+        smoothed_probs = scatter_mean(state_probs_tensor[row], col, dim=0)
+        final_states = smoothed_probs.argmax(dim=1).cpu().numpy()
 
-        # Compute neighbor average states for each node
-        neighbor_avg_states = scatter_mean(states_tensor_per_node[row], col, dim=0, dim_size=states_tensor.size(0))
-        # Blend node states with neighbor average states (0.5:0.5 weighting)
-        smoothed_states = 0.5 * states_tensor_per_node + 0.5 * neighbor_avg_states
-        smoothed_states = smoothed_states.unsqueeze(-1)  # [N, 1]
+        # 状态张量
+        states_tensor = torch.tensor(final_states + 1, dtype=torch.float32, device=device).reshape(-1, 1)
 
-        # Compute copy number adjusted by smoothed states
-        state_adjusted_copy = reconstructed_features * smoothed_states
+        # 用状态调整拷贝数
+        state_adjusted_copy = reconstructed_features * states_tensor
         copy_sum = state_adjusted_copy.sum(dim=1, keepdim=True)
 
-        # Normalize
+        # 归一化
         pseudo_sum = norm_x.sum(dim=1, keepdim=True)
         norm_copy = state_adjusted_copy / (copy_sum + 1e-8) * pseudo_sum
 
-        # Dynamic range scaling
+        # 动态范围缩放
         range_min, range_max = norm_copy.min().item() * 0.8, norm_copy.max().item() * 1.2
         norm_copy = (norm_copy - norm_copy.min()) / (norm_copy.max() - norm_copy.min() + 1e-8)
         norm_copy = norm_copy * (range_max - range_min) + range_min
 
-        # Adjust mean to 1
+        # 调整均值到 1
         current_mean = norm_copy.mean()
         norm_copy = norm_copy / current_mean
-        
-        # Regularization loss
+
+        # 正则化损失
         reg_loss = torch.sum(reconstructed_features ** 2) * 1e-4
 
         return norm_copy, reg_loss
 
 
-# SCOIGET model
+# SCOIGET 模型
 class SCOIGET(nn.Module):
     def __init__(self, original_dim, intermediate_dim=128, latent_dim=32, max_cp=25, kl_weights=0.5, dropout=0.0, hmm_states=3, max_iters=20, gnn_heads=8, lambda_smooth=0.1, device='cpu'):
         super(SCOIGET, self).__init__()
         self.device = device
         self.max_cp = max_cp
         self.kl_weights = kl_weights
-        self.lambda_smooth = lambda_smooth  # Regularization weight for spatial smoothing
+        self.lambda_smooth = lambda_smooth  # 空间平滑正则项系数
 
         self.z_encoder = Encoder(original_dim, intermediate_dim, latent_dim, heads=gnn_heads, dropout=dropout).to(self.device)
         self.decoder = Decoder(latent_dim, intermediate_dim, original_dim).to(self.device)
@@ -176,10 +167,10 @@ class SCOIGET(nn.Module):
         z_mean, z_var, z = self.z_encoder(inputs, edge_index)
         reconstructed_features = self.decoder(z)
         
-        # Pass edge_index to CNEncoder for spatial smoothing
+        # 传入edge_index进行CNEncoder的计算，以对states进行空间平滑
         norm_copy, reg_loss = self.encoder([inputs, reconstructed_features], edge_index)
 
-        # KL divergence loss
+        # KL 散度损失
         p_dis = torch.distributions.Normal(loc=z_mean, scale=torch.sqrt(z_var))
         q_dis = torch.distributions.Normal(loc=torch.zeros_like(z_mean), scale=torch.ones_like(z_var))
         kl_loss = torch.sum(torch.distributions.kl_divergence(p_dis, q_dis), dim=1) * self.kl_weights
@@ -192,7 +183,7 @@ class SCOIGET(nn.Module):
         norm_copy, reconstructed_features, kl_loss, reg_loss = self(data, edge_index, edge_attr)
         recon_loss = F.mse_loss(reconstructed_features, data, reduction='mean')
 
-        # Add spatial smoothing loss term
+        # 添加空间平滑损失项
         row, col = edge_index
         spatial_smooth_loss = F.mse_loss(norm_copy[row], norm_copy[col])
 
@@ -207,7 +198,7 @@ class SCOIGET(nn.Module):
             norm_copy, reconstructed_features, kl_loss, reg_loss = self(data, edge_index, edge_attr)
             recon_loss = F.mse_loss(reconstructed_features, data, reduction='mean')
             
-            # Compute spatial smoothing in validation without backpropagation
+            # 验证集上同样计算空间平滑但不反传
             row, col = edge_index
             spatial_smooth_loss = F.mse_loss(norm_copy[row], norm_copy[col])
             
