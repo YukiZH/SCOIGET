@@ -19,22 +19,20 @@ By elucidating spatial and temporal changes within the tumor microenvironment, S
 
 ## System Requirements
 ### Hardware Requirements
-· Memory: 16GB or higher for efficient processing.
-· GPU: NVIDIA GPU (A100/3090) is highly recommended for accelerating training times.
+- Memory: 16GB or higher for efficient processing.
+- GPU: NVIDIA GPU (A100/3090) is highly recommended for accelerating training times.
 ### Operating System Requirements
-· Linux: Ubuntu 16.04 or newer.
+- Linux: Ubuntu 16.04 or newer.
 
 
 ## Environment Setup
 This section details the steps to set up the project environment using Anaconda.
-
 
 ### Prerequisites
 ```
 Python 3.8.20
 pytorch==2.2.2
 ```
-
 
 ### Cloning the Repository and Preparing the Environment
 Actual installation time depends on network conditions and takes about 15 minutes.
