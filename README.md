@@ -3,9 +3,8 @@
 <img width="200" alt="image" src="https://github.com/user-attachments/assets/6ca8a158-9127-44ce-bcee-1e35143fd6c6">
 <img width="600" alt="image" src="https://github.com/user-attachments/assets/5afb1e2c-344c-42d7-8c61-db972bcde820"> 
 
-SCOIGET: A Tool for Predicting Spatial Tumor Evolution Pattern by Inferring Spatial Copy Number Variation Distributions
+A Tool for Predicting Spatial Tumor Evolution Pattern by Inferring Spatial Copy Number Variation Distributions
 
-&nbsp; 
 ## Overview
 **SCOIGET** (**S**patial **CO**py number **I**nference by **G**raph on **E**volution of **T**umor) is a groundbreaking framework designed to decode tumor heterogeneity by constructing comprehensive spatiotemporal maps through spatial omics data. Traditional methods, primarily developed for single-cell analysis, overlook critical spatial information, limiting their ability to capture tumor evolution dynamics. SCOIGET addresses this gap by integrating graph neural networks (GNNs) with graph attention layers to model spatial neighborhood features of gene expression and infer copy number variations (CNVs).
 
