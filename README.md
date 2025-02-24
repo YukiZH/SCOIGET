@@ -1,4 +1,3 @@
-<div style="line-height: 1.6;">
 # SCOIGET
 
 <img width="200" alt="image" src="https://github.com/user-attachments/assets/6ca8a158-9127-44ce-bcee-1e35143fd6c6">
@@ -6,7 +5,7 @@
 
 SCOIGET: A Tool for Predicting Spatial Tumor Evolution Pattern by Inferring Spatial Copy Number Variation Distributions
 
-
+&nbsp; 
 ## Overview
 **SCOIGET** (**S**patial **CO**py number **I**nference by **G**raph on **E**volution of **T**umor) is a groundbreaking framework designed to decode tumor heterogeneity by constructing comprehensive spatiotemporal maps through spatial omics data. Traditional methods, primarily developed for single-cell analysis, overlook critical spatial information, limiting their ability to capture tumor evolution dynamics. SCOIGET addresses this gap by integrating graph neural networks (GNNs) with graph attention layers to model spatial neighborhood features of gene expression and infer copy number variations (CNVs).
 
@@ -17,7 +16,7 @@ Key innovations include:
 
 By elucidating spatial and temporal changes within the tumor microenvironment, SCOIGET enhances the precision of tumor evolution modeling and accelerates insights into cancer progression. This tool empowers researchers to uncover actionable biomarkers and design personalized therapeutic strategies, bridging the gap between spatial omics innovation and clinical translation.
 
-
+&nbsp; 
 ## System Requirements
 ### Hardware Requirements
 - Memory: 16GB or higher for efficient processing.
@@ -25,7 +24,7 @@ By elucidating spatial and temporal changes within the tumor microenvironment, S
 ### Operating System Requirements
 - Linux: Ubuntu 16.04 or newer.
 
-
+&nbsp; 
 ## Environment Setup
 This section details the steps to set up the project environment using Anaconda.
 
@@ -68,7 +67,7 @@ pip install torch-geometric==2.5.2
 pip install -r requirements.txt
 ```
 
-
+&nbsp; 
 ## Usage
 Note that we conducted experiments with the A100/3090 on Linux.
 
@@ -116,7 +115,6 @@ Before running, please download the compressed folder of the ```Dataset``` from 
 `-- Macosko_cell_cycle_genes.txt
 ```
 
-
+&nbsp; 
 ## License
 This project is covered under the Apache 2.0 License.
-</div>
