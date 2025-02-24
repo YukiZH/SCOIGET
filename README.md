@@ -62,7 +62,7 @@ Note that we conducted experiments with the A100/3090 on Linux.
 
 Before running, please download the compressed folder of the ```Dataset``` from Google drive and decompress it in ```./```, After decompression, the dir structure under ```./``` will be:
 ```
-/home/.../STAIG
+/home/.../SCOIGET
 |-- Dataset
 |   |-- PAT71397
 |   |   |-- 6723_1
@@ -84,6 +84,9 @@ Before running, please download the compressed folder of the ```Dataset``` from 
 |   |-- copy.npy
 |   |-- model_1st.pth
 |   |-- model_2st.pth
+
+|-- tutorial
+|   |-- example_tutorial.ipynb
 
 |-- requirements.txt
 
