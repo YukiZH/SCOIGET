@@ -57,6 +57,50 @@ pip install torch-geometric==2.5.2
 pip install -r requirements.txt
 ```
 
+## Usage
+Note that we conducted experiments with the A100/3090 on Linux.
+
+Before running, please download the compressed folder of the ```Dataset``` from Google drive and decompress it in ```./```, After decompression, the dir structure under ```./``` will be:
+```
+/home/.../STAIG
+|-- Dataset
+|   |-- PAT71397
+|   |   |-- 6723_1
+|   |   |   |-- 6723_KL_1_filtered_trimmed.h5ad
+|   |   |   `-- 6723_1_pathology_annotation.csv
+|   |   |-- 6723_2
+|   |   |   |-- 6723_KL_2_filtered_trimmed.h5ad
+|   |   |   `-- 6723_2_pathology_annotation.csv
+|   |   |-- 6723_3
+|   |   |   |-- 6723_KL_3_filtered_trimmed.h5ad
+|   |   |   `-- 6723_3_pathology_annotation.csv
+|   |   |-- 6723_4
+|   |   |   |-- 6723_KL_4_filtered_trimmed.h5ad
+|   |   |   `-- 6723_4_pathology_annotation.csv
+|   |   `-- combined_processed_adata.h5ad
+
+|-- merged_output
+|   |-- chrom_list.npy
+|   |-- copy.npy
+|   |-- model_1st.pth
+|   |-- model_2st.pth
+
+|-- requirements.txt
+
+|-- scoiget
+|   |-- __init__.py
+|   |-- preprocess_utils.py
+|   |-- cnv_utils.py
+|   |-- graph_utils.py
+|   |-- scoiget_model.py
+|   |-- train_utils.py
+|   |-- cluster_utils.py
+|   |-- segment_utils.py
+|   `-- draw_utils.py
+
+`-- Macosko_cell_cycle_genes.txt
+```
+
 ## License
 This project is covered under the Apache 2.0 License.
 
