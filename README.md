@@ -21,8 +21,10 @@ SCOIGET: A Tool for Predicting Spatial Tumor Evolution Pattern by Inferring Spat
 This section details the steps to set up the project environment using Anaconda.
 
 ### Prerequisites
+```
 Python 3.8.20
 pytorch==2.2.2
+```
 
 ### Cloning the Repository and Preparing the Environment
 Actual installation time depends on network conditions and takes about 15 minutes.
