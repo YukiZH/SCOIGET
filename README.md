@@ -57,12 +57,11 @@ conda activate scoiget_env
 # For GPU (CUDA 12.1)
 pip install torch==2.2.2+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
 
-## Step2: Installing Pyg
-pip install torch-scatter==2.1.2+pt22cu121 --extra-index-url https://download.pytorch.org/whl/cu121
-pip install torch-sparse==0.6.18+pt22cu121 --extra-index-url https://download.pytorch.org/whl/cu121
-pip install torch-cluster==1.6.3+pt22cu121 --extra-index-url https://download.pytorch.org/whl/cu121
-pip install torch-geometric==2.5.2
-   
+## Step2: Installing PyTorch Geometric and dependencies
+pip install torch-scatter==2.1.2+pt22cu121 torch-sparse==0.6.18+pt22cu121 torch-cluster==1.6.3+pt22cu121 torch-geometric==2.5.2 \
+  --extra-index-url https://download.pytorch.org/whl/cu121 \
+  -f https://data.pyg.org/whl/torch-2.2.0+cu121.html 
+
 ## Step3: Download other dependencies
 pip install -r requirements.txt
 ```
