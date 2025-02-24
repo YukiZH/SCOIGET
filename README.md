@@ -1,3 +1,4 @@
+<div style="line-height: 1.6;">
 # SCOIGET
 
 <img width="200" alt="image" src="https://github.com/user-attachments/assets/6ca8a158-9127-44ce-bcee-1e35143fd6c6">
@@ -118,5 +119,4 @@ Before running, please download the compressed folder of the ```Dataset``` from 
 
 ## License
 This project is covered under the Apache 2.0 License.
-
-
+</div>
