@@ -26,4 +26,3 @@ torch-cluster==1.6.3+pt22cu121
 pyensembl==2.3.13
 pot==0.9.5
 hmmlearn==0.3.3
-ot==0.9.5  
