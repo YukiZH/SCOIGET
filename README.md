@@ -118,6 +118,9 @@ Before running, please download the compressed folder of the ```Dataset``` from 
 `-- Macosko_cell_cycle_genes.txt
 ```
 
+Then, you can follow the ```example_tutorial.ipynb``` to run SCOIGET.
+
+
 &nbsp; 
 ## License
 This project is covered under the Apache 2.0 License.
