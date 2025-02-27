@@ -119,7 +119,8 @@ Before running, please download the compressed folder of the ```Dataset``` from 
 ```
 
 Then, you can follow the ```tutorial/example_tutorial.ipynb``` to run SCOIGET.  
-***Enjoy your explorations!***
+
+**Enjoy your explorations!**
 
 
 &nbsp; 
