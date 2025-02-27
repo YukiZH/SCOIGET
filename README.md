@@ -62,10 +62,13 @@ pip install torch-scatter==2.1.2+pt22cu121 torch-sparse==0.6.18+pt22cu121 torch-
   --extra-index-url https://download.pytorch.org/whl/cu121 \
   -f https://data.pyg.org/whl/torch-2.2.0+cu121.html 
 
-## Step3: Download other dependencies
+## Step3: Installing cupy
+conda install -c conda-forge cupy
+
+## Step4: Download other dependencies
 pip install -r requirements.txt
 
-## Step4: Installing jupyter kernel
+## Step5: Installing jupyter kernel
 pip install jupyter ipykernel
 python -m ipykernel install --user --name scoiget_env --display-name "scoiget_env"
 ```
