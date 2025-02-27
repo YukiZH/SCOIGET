@@ -118,9 +118,7 @@ Before running, please download the compressed folder of the ```Dataset``` from 
 `-- Macosko_cell_cycle_genes.txt
 ```
 
-Then, you can follow the ```tutorial/example_tutorial.ipynb``` to run SCOIGET.  
-
-*Enjoy your explorations!*
+Then, you can follow the ```tutorial/example_tutorial.ipynb``` to run SCOIGET.  *Enjoy your explorations!*
 
 
 &nbsp; 
