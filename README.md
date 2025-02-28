@@ -68,7 +68,10 @@ conda install -c conda-forge cupy
 ## Step4: Download other dependencies
 pip install -r requirements.txt
 
-## Step5: Installing jupyter kernel
+## Step5: Download ensembl file
+pyensembl install --release 98 --species homo_sapiens
+
+## Step6: Installing jupyter kernel
 pip install jupyter ipykernel
 python -m ipykernel install --user --name scoiget_env --display-name "scoiget_env"
 ```
