@@ -68,7 +68,7 @@ conda install -c conda-forge cupy
 ## Step4: Download other dependencies
 pip install -r requirements.txt
 
-## Step5: Download ensembl file
+## Step5: Download Ensembl file
 pyensembl install --release 98 --species homo_sapiens
 
 ## Step6: Installing jupyter kernel
