@@ -10,7 +10,6 @@ matplotlib==3.7.5
 seaborn==0.13.2
 anndata==0.9.2
 tqdm==4.67.1
-cupy==12.3.0
 
 # Spatial/Image processing
 shapely==2.0.6
