@@ -3,10 +3,6 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 from sklearn.metrics import silhouette_score
-
-#import rpy2.robjects as robjects
-#import rpy2.robjects.numpy2ri
-
 from tqdm import tqdm
 
 
@@ -29,16 +25,6 @@ def mclust_R(adata, num_cluster, modelNames='EEE', used_obsm='latent', random_se
     adata.obs['mclust'] = adata.obs['mclust'].astype('int')
     adata.obs['mclust'] = adata.obs['mclust'].astype('category')
     return adata
-
-'''
-export LD_LIBRARY_PATH="/export/home/zhangyujia/anaconda3/envs/stlearn/lib64/R/lib:$LD_LIBRARY_PATH"
-import os
-os.environ['R_HOME'] = '/export/home/zhangyujia/anaconda3/envs/r4-base/lib64/R'
-os.environ['LD_LIBRARY_PATH'] = '/export/home/zhangyujia/anaconda3/envs/r4-base/lib64/R/lib:' + os.environ.get('LD_LIBRARY_PATH', '')
-os.environ['LD_LIBRARY_PATH'] = "/export/home/zhangyujia/anaconda3/envs/stlearn/lib64/R/lib:$LD_LIBRARY_PATH"
-# 导入前先设置环境变量
-import rpy2
-'''
 
 
 def search_res(radius, adata, n_clusters, method='leiden', use_rep='latent', start=0.01, end=5.0, increment=0.01):
