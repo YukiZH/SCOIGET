@@ -17,20 +17,20 @@ def get_x_bin_data(adata, bin_size):
     Returns:
         AnnData: The updated AnnData object with binned data added to `adata.uns['binned_data'].obsm`.
     """
-    # 从adata中提取数据
+    # Extract data from adata
     binned_data = adata.uns['binned_data']
     try:
         x = binned_data.X.todense()
     except AttributeError:
         x = binned_data.X
-    # 确保列数是bin_size的整数倍
+    # Ensure the number of columns is a multiple of bin_size
     n_vars = x.shape[1]
     remainder = n_vars % bin_size
     if remainder != 0:
         x = np.pad(x, ((0, 0), (0, bin_size - remainder)), mode='constant', constant_values=0)
-    # 执行分箱和均值计算
+    # Perform binning and compute the mean
     x_bin = x.reshape(-1, bin_size).copy().mean(axis=1).reshape(x.shape[0], -1)
-    # 将x_bin添加到binned_data的obsm中
+    # Add x_bin to binned_data's obsm
     binned_data.obsm['X_bin'] = x_bin
     return adata
 
@@ -61,20 +61,20 @@ def get_x_bin_data_torch(adata, bin_size, batch_size=1000):
         x = csr_matrix(np.hstack([x.toarray(), padding.toarray()]))
 
     n_bins = x.shape[1] // bin_size
-    # 创建一个存储结果的GPU张量
+    # Create a GPU tensor to store the result
     x_bin = torch.zeros((n_rows, n_bins), device='cuda')
 
-    # 分批次处理数据
+    # Process data in batches
     for i in range(0, n_rows, batch_size):
         batch_x = torch.tensor(x[i:i + batch_size].toarray(), device='cuda')
 
-        # 计算每个bin的均值
+        # Compute the mean for each bin
         for j in range(n_bins):
             start_idx = j * bin_size
             end_idx = (j + 1) * bin_size
             x_bin[i:i + batch_size, j] = batch_x[:, start_idx:end_idx].mean(dim=1)
 
-    # 将x_bin移动回CPU并转换为稀疏矩阵
+    # Move x_bin back to CPU and convert to a sparse matrix
     x_bin_cpu = x_bin.cpu().numpy()
     binned_data.obsm['X_bin'] = csr_matrix(x_bin_cpu)
     return adata
@@ -142,40 +142,40 @@ def compute_edge_weights_and_probabilities(adata, use_norm_x=True, n_neighbors=5
     node_emb = adata.obsm['norm_x'] if use_norm_x else adata.obsm['feat']
     scaler = MaxAbsScaler()
     
-    # 检查 node_emb 是否为稀疏矩阵，若是则转换为密集矩阵
+    # Check if node_emb is a sparse matrix, and convert it to a dense matrix if necessary
     if issparse(node_emb):
         embedding = scaler.fit_transform(node_emb.toarray())
     else:
         embedding = scaler.fit_transform(node_emb)
     
-    # 使用 PCA 降维
+    # Use PCA for dimensionality reduction
     pca = PCA(n_components=32, random_state=42)
     embedding = pca.fit_transform(embedding)
 
-    # 使用 sklearn 的 NearestNeighbors 进行 k-NN 搜索
+    # Use sklearn's NearestNeighbors for k-NN search
     nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1, algorithm='auto').fit(embedding)
     distances, indices = nbrs.kneighbors(embedding)
 
-    # 初始化稀疏矩阵用于边权重和边概率
+    # Initialize sparse matrices for edge weights and probabilities
     n_spots = embedding.shape[0]
     edge_weights = lil_matrix((n_spots, n_spots), dtype=float)
     edge_probabilities = lil_matrix((n_spots, n_spots), dtype=float)
 
-    # 填充 edge_weights 矩阵
+    # Fill the edge_weights matrix
     for i in range(n_spots):
-        neighbors = indices[i, 1:]  # 排除自己
+        neighbors = indices[i, 1:]  # Exclude self
         dist = distances[i, 1:]
         edge_weights[i, neighbors] = dist
 
-    # 使用 graph_neigh 中的边来计算 softmax 概率
+    # Use edges from graph_neigh to compute softmax probabilities
     graph_neigh = adata.obsm['graph_neigh']
     for i in range(n_spots):
-        neighbors = graph_neigh[i].nonzero()[1]  # 仅使用 graph_neigh 中的边
+        neighbors = graph_neigh[i].nonzero()[1]  # Only use edges from graph_neigh
         if len(neighbors) > 0:
             non_zero_weights = edge_weights[i, neighbors].toarray().flatten()
             softmax_weights = softmax(non_zero_weights)
             edge_probabilities[i, neighbors] = softmax_weights
 
-    # 将边权重和概率存储在 AnnData 对象中，并转换为 csr 格式
+    # Store edge weights and probabilities in the AnnData object, and convert to csr format
     adata.obsm['edge_weights_norm_x' if use_norm_x else 'edge_weights'] = edge_weights.tocsr()
     adata.obsm['edge_probabilities_norm_x' if use_norm_x else 'edge_probabilities'] = edge_probabilities.tocsr()
