@@ -110,19 +110,19 @@ def gene_binning_from_adata(adata, bin_size):
     return adata, chrom_list
 
 
-### 自动选择cluster数量
+### Automatically select the number of clusters
 def perform_clustering(model, data, max_clusters=10):
     model.eval()
     with torch.no_grad():
         z_mean, z_var, z = model.z_encoder(data.x, data.edge_index)
         z = z.cpu().numpy() if z.is_cuda else z.numpy()
 
-    # 初始化最佳参数
+    # Initialize best parameters
     best_num_clusters = 2
     best_score = -1
     best_labels = None
 
-    # 遍历不同的聚类数量
+    # Iterate through different cluster numbers
     for num_clusters in range(2, max_clusters + 1):
         kmeans = KMeans(n_clusters=num_clusters, random_state=0, n_init=10).fit(z)
         labels = kmeans.labels_
@@ -146,32 +146,32 @@ def auto_corr(cluster_data):
     Returns:
         autocorrelation: Autocorrelation value.
     """
-    # 计算样本对的内积矩阵 (n_samples x n_samples)
-    dot_product = np.dot(cluster_data, cluster_data.T)  # 矩阵乘法
+    # Compute the dot product matrix (n_samples x n_samples)
+    dot_product = np.dot(cluster_data, cluster_data.T)  # Matrix multiplication
 
-    # 计算总和的平均值
+    # Compute the average of the sum
     n_samples = cluster_data.shape[0]
     res = np.sum(dot_product) / (n_samples * (n_samples + 1) / 2)
 
-    # 按行计算方差的平均值
+    # Compute the average variance by row
     var_mean = np.var(cluster_data, axis=1).mean()
 
-    # 计算自相关
+    # Compute autocorrelation
     autocorrelation = res / var_mean
     return autocorrelation
 
 
 def find_normal_cluster(x_bin, pred_label, n_clusters=2):
-    # 初始化存储自相关值的数组
-    cluster_auto_corr = np.full(n_clusters, -np.inf)  # 初始化为极小值
+    # Initialize an array to store autocorrelation values
+    cluster_auto_corr = np.full(n_clusters, -np.inf)  # Initialize to a very small value
     for i in range(n_clusters):
         mask = (pred_label == i)
-        cluster_data = x_bin[mask, :]  # 选择属于当前簇的数据
-        if cluster_data.shape[0] == 0:  # 如果当前簇为空，跳过
+        cluster_data = x_bin[mask, :]  # Select data belonging to the current cluster
+        if cluster_data.shape[0] == 0:  # If the current cluster is empty, skip
             continue
         cluster_mean = cluster_data.mean(axis=0)
-        cluster_auto_corr[i] = auto_corr(cluster_data - cluster_mean)  # 自相关计算
-    normal_index = np.argmax(cluster_auto_corr)  # 找到自相关最大的簇
+        cluster_auto_corr[i] = auto_corr(cluster_data - cluster_mean)  # Autocorrelation calculation
+    normal_index = np.argmax(cluster_auto_corr)  # Find the cluster with the highest autocorrelation
     return cluster_auto_corr, normal_index
 
 
@@ -186,32 +186,32 @@ def compute_pseudo_copy(x_bin, norm_mask):
     return pseudo_cp
 
 
-### gpu加速
+### GPU acceleration
 
 import cupy as cp
 import torch
 
 def perform_clustering_gpu(features, max_clusters=10, block_size=1000):
     """
-    GPU 加速的自动聚类函数，直接接受特征张量作为输入。
+    GPU-accelerated automatic clustering function that directly accepts feature tensors as input.
     
-    参数:
-    - features: 用于聚类的特征张量，类型为 NumPy 数组或 Torch 张量。
-    - max_clusters: 最大聚类数量。
-    - block_size: GPU 批量计算的块大小。
+    Args:
+    - features: Feature tensor for clustering, either a NumPy array or a Torch tensor.
+    - max_clusters: Maximum number of clusters.
+    - block_size: Block size for GPU batch computation.
     """
-    # 如果是 Torch 张量，将其转换为 NumPy 数组
+    # If it's a Torch tensor, convert it to a NumPy array
     if isinstance(features, torch.Tensor):
         features = features.detach().cpu().numpy()
 
-    # 转换为 GPU 上的数组
+    # Convert to a GPU array
     features_gpu = cp.asarray(features)
 
     best_num_clusters = 2
     best_score = -1
     best_labels = None
 
-    # GPU 实现 KMeans
+    # GPU implementation of KMeans
     for num_clusters in range(2, max_clusters + 1):
         labels = kmeans_gpu(features_gpu, num_clusters, block_size=block_size)
         score = silhouette_score_gpu(features_gpu, labels, block_size=block_size)
@@ -248,22 +248,22 @@ def auto_corr_gpu(x):
 def kmeans_gpu(z, num_clusters, max_iter=100, tol=1e-4, block_size=1000):
     z_gpu = cp.asarray(z)
 
-    # 初始化簇中心
+    # Initialize cluster centers
     indices = cp.random.choice(z_gpu.shape[0], num_clusters, replace=False)
     centers = z_gpu[indices]
 
     for _ in range(max_iter):
-        # 分块计算每个点到中心的距离
+        # Compute distances in blocks
         labels = cp.zeros(z_gpu.shape[0], dtype=cp.int32)
         for i in range(0, z_gpu.shape[0], block_size):
             block = slice(i, min(i + block_size, z_gpu.shape[0]))
             distances = cp.linalg.norm(z_gpu[block, None, :] - centers[None, :, :], axis=2)
             labels[block] = cp.argmin(distances, axis=1)
 
-        # 计算新中心
+        # Compute new centers
         new_centers = cp.array([z_gpu[labels == i].mean(axis=0) for i in range(num_clusters)])
 
-        # 检查收敛
+        # Check for convergence
         if cp.linalg.norm(new_centers - centers) < tol:
             break
         centers = new_centers
@@ -272,7 +272,7 @@ def kmeans_gpu(z, num_clusters, max_iter=100, tol=1e-4, block_size=1000):
 
 def silhouette_score_gpu(z, labels, block_size=100):
     """
-    GPU优化的silhouette score计算，避免显存溢出。
+    GPU-optimized silhouette score computation to avoid memory overflow.
     """
     z_gpu = cp.asarray(z)
     labels_gpu = cp.asarray(labels)
@@ -283,11 +283,11 @@ def silhouette_score_gpu(z, labels, block_size=100):
     scores = cp.zeros(n_samples)
 
     for i in range(n_samples):
-        # 当前点与其他点的距离
+        # Distance between the current point and other points
         current_point = z_gpu[i]
         distances = cp.linalg.norm(z_gpu - current_point, axis=1)
         
-        # 计算 a (intra-cluster 距离)
+        # Compute a (intra-cluster distance)
         current_label = labels_gpu[i]
         intra_cluster_mask = labels_gpu == current_label
         if cp.sum(intra_cluster_mask) > 1:
@@ -295,7 +295,7 @@ def silhouette_score_gpu(z, labels, block_size=100):
         else:
             a = 0
 
-        # 计算 b (nearest-cluster 距离)
+        # Compute b (nearest-cluster distance)
         inter_cluster_distances = []
         for label in unique_labels:
             if label != current_label:
