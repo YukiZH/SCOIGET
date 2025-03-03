@@ -7,7 +7,7 @@ from torch_geometric.loader import DataLoader
 from torch_geometric.utils import from_scipy_sparse_matrix
 from scipy.sparse import coo_matrix, csr_matrix
 import numpy as np
-from scoiget.scoiget_model import SCOIGET  # 导入SCOIGET模型
+from scoiget.scoiget_model import SCOIGET  # Import SCOIGET model
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import torch
@@ -92,34 +92,34 @@ def split_large_graph(data, num_subgraphs, batch_size=None):
 
     data_list = []
     for i in range(num_subgraphs):
-        # 当前子图的节点范围
+        # Node range for the current subgraph
         node_start = i * batch_size
         node_end = min((i + 1) * batch_size, node_count)
 
-        # 筛选属于当前子图的边
+        # Filter edges belonging to the current subgraph
         node_mask = (data.edge_index[0] >= node_start) & (data.edge_index[0] < node_end) & \
                     (data.edge_index[1] >= node_start) & (data.edge_index[1] < node_end)
         edge_index = data.edge_index[:, node_mask]
         edge_attr = data.edge_attr[node_mask]
 
-        # 如果没有边，则跳过当前子图
+        # Skip the current subgraph if there are no edges
         if edge_index.size(1) == 0:
             print(f"Edge index out of range in subgraph {i}. Skipping...")
             continue
 
-        # 调整边的索引，使其相对于子图的节点范围
+        # Adjust edge indices to be relative to the subgraph's node range
         edge_index[0] -= node_start
         edge_index[1] -= node_start
 
-        # 当前子图的节点特征
+        # Node features for the current subgraph
         sub_x = data.x[node_start:node_end]
 
-        # 确保边索引和节点特征范围匹配
+        # Ensure edge indices and node feature ranges match
         if edge_index.max() >= sub_x.size(0):
             print(f"Edge index out of range in subgraph {i}. Skipping...")
             continue
 
-        # 创建子图 Data 对象
+        # Create subgraph Data object
         sub_data = Data(x=sub_x, edge_index=edge_index, edge_attr=edge_attr)
         data_list.append(sub_data)
 
@@ -156,7 +156,7 @@ def split_train_val(data, validation_split):
         val_idx, data.edge_index, data.edge_attr, relabel_nodes=True
     )
 
-    # 构建训练和验证数据
+    # Build training and validation data
     train_data = Data(
         x=data.x[train_idx],
         edge_index=train_edge_index,
@@ -185,15 +185,15 @@ def train_scoiget(data, original_dim, intermediate_dim, latent_dim, max_cp, kl_w
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    # 初始化模型和优化器
+    # Initialize model and optimizer
     model = SCOIGET(original_dim, intermediate_dim, latent_dim, max_cp, kl_weights, 
                     dropout=dropout, hmm_states=hmm_states, max_iters=max_iters, 
                     gnn_heads=gnn_heads, lambda_smooth=lambda_smooth, device=device).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
-    # 根据data生成子图列表
+    # Generate subgraph list from data
     if use_mini_batch:
-        # 使用子图进行 mini-batch 训练
+        # Use subgraphs for mini-batch training
         print("Using mini-batch training...")
         data_list = split_large_graph(data, num_subgraphs=num_subgraphs, batch_size=batch_size)
         valid_subgraphs = [sub_data for sub_data in data_list if sub_data.edge_index.size(1) > 0]
@@ -208,7 +208,7 @@ def train_scoiget(data, original_dim, intermediate_dim, latent_dim, max_cp, kl_w
             raise ValueError("No valid subgraphs generated. Please check your graph data.")
         loader = DataLoader(valid_subgraphs, batch_size=1, shuffle=True)
     else:
-        # 使用整张图进行训练
+        # Use the entire graph for training
         print("Using full-graph training...")
         loader = [data]
 
@@ -216,13 +216,12 @@ def train_scoiget(data, original_dim, intermediate_dim, latent_dim, max_cp, kl_w
     val_losses = []
     warnings.filterwarnings("ignore", category=UserWarning)
 
-    # 如果您有验证集，则需要从data中分割出验证集数据（validation_split）
-    # 假设您已经有相应的逻辑分割data为train_data, val_data
-    # 这里只是给出结构化的示例
+    # If you have a validation set, split the data into train_data and val_data
+    # This is just a structured example
     train_data = data
     val_data = None
     if validation_split is not None:
-        # 请根据您的数据情况进行数据拆分，这里只示意
+        # Split the data based on your specific case, this is just a placeholder
         train_data, val_data = split_train_val(data, validation_split)
     
     with tqdm(total=epochs, desc="Training Progress", unit="epoch") as pbar:
@@ -236,14 +235,14 @@ def train_scoiget(data, original_dim, intermediate_dim, latent_dim, max_cp, kl_w
                 else:
                     batch = data.to(device)
 
-                # 使用model中定义的train_step进行训练
+                # Use the train_step method defined in the model for training
                 loss = model.train_step(batch.x, batch.edge_index, batch.edge_attr, optimizer)
                 total_loss += loss
 
             avg_loss = total_loss / len(loader)
             train_losses.append(avg_loss)
 
-            # 可选：验证集
+            # Optional: Validation set
             if val_data is not None:
                 model.eval()
                 with torch.no_grad():
@@ -263,10 +262,10 @@ def train_scoiget(data, original_dim, intermediate_dim, latent_dim, max_cp, kl_w
 
             pbar.update(1)
 
-    # 保存模型和绘制损失曲线
+    # Save the model and plot the loss curve
     if save_path:
         os.makedirs(save_path, exist_ok=True)
-        torch.save(model.state_dict(), os.path.join(save_path, "scoiget_model.pth"))
+        torch.save(model.state_dict(), os.path.join(ssave_path, "scoiget_model.pth"))
         print(f"Model saved to {os.path.join(save_path, 'scoiget_model.pth')}")
     
     plt.figure(figsize=(8, 6), constrained_layout=True)
