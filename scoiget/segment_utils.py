@@ -1,4 +1,3 @@
-
 import os
 import numpy as np
 import torch
@@ -120,17 +119,17 @@ def plot_heatmap_and_segmentation(cluster_dict, chrom_list, output_dir, bin_size
         segmentation_results (dict): Dictionary containing segmentation results.
         method (str): Clustering method used.
     """
-    # 组合所有簇的分段拷贝数数据
+    # Combine segmented copy number data for all clusters
     heatmap_data = []
     for label, (segment_cn, _, _) in segmentation_results.items():
         heatmap_data.append(segment_cn)
     heatmap_data = np.vstack(heatmap_data)
     
-    # 绘制热图
+    # Plot the heatmap
     plt.figure(figsize=(20, 4))
     sns.heatmap(heatmap_data, cmap="coolwarm", cbar=True, cbar_kws={"label": "Copy Number Variation"})
     
-    # 设置染色体标签
+    # Set chromosome labels
     chrom_labels = [f'chr{i}' for i in range(1, 23)] + ['chrX', 'chrY']
     chrom_positions = [0] + [end for _, end in chrom_list]
     chrom_midpoints = [(chrom_positions[i] + chrom_positions[i+1]) // 2 for i in range(len(chrom_positions) - 1)]
@@ -139,20 +138,20 @@ def plot_heatmap_and_segmentation(cluster_dict, chrom_list, output_dir, bin_size
     plt.xlabel("Chromosome", fontsize=14)
     plt.ylabel("Cluster", fontsize=14)
     
-    # 添加染色体分割线（增强效果）
+    # Add chromosome boundary lines (enhanced effect)
     for pos in chrom_positions:
         plt.axvline(x=pos, color='black', linestyle='-', linewidth=1.5)
     
-    # 添加标题并优化布局
+    # Add title and optimize layout
     plt.title(f"Copy Number Profile Heatmap by Cluster ({library_id})", fontsize=16, fontweight='bold')
     plt.tight_layout()
     
-    # 保存热图
+    # Save the heatmap
     heatmap_path = os.path.join(output_dir, f"{library_id}_{method}_segmentation_heatmap.png")
     plt.savefig(heatmap_path, dpi=300)
     plt.show()
 
-    # 为每个簇绘制分段结果
+    # Plot segmentation results for each cluster
     for label, (segment_cn, bp_arr, sp_cn) in segmentation_results.items():
         save_path = os.path.join(output_dir, f"{library_id}_{method}_segmentation_result_{label}.png")
         plot_segmentation(cluster_dict[label], segment_cn, bp_arr, chrom_list, save_path)
@@ -189,8 +188,8 @@ def plot_segmentation(clone_cn, segment_cn, bp_arr, chrom_list, save_path):
     plt.savefig(save_path.replace(".png", "_with_original.png"), dpi=300)
     plt.show()
 
-    # 再绘制一个不包含原始信号的分段结果图
-    plt.figure(figsize=(20, 5))
+    # Plot another segmentation result without the original signal
+    plt.figure(figsize(20, 5))
     for bkp in bp_arr:
         plt.axvline(x=bkp, color='red', linestyle='--')
     plt.plot(segment_cn, label='Segmented Signal', linestyle='-', color="darkorange")
