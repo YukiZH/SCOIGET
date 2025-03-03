@@ -22,15 +22,15 @@ import scipy
 
 def generate_adata(sample_root, library_id, method="visium"):
     """
-    根据用户指定的方法加载 Visium 或 Visium HD 数据，并为将来扩展其他方法预留接口。
+    Load Visium or Visium HD data based on the specified method, and reserve an interface for future extensions to other methods.
 
-    参数:
-    - sample_root: str，Visium 或 Visium HD 数据的根目录。
-    - library_id: str，样本的库 ID。
-    - method: str，加载数据的方法，可选 'visium' 或 'visiumhd'，未来可以扩展更多方法。
+    Args:
+    - sample_root: str, root directory of Visium or Visium HD data.
+    - library_id: str, library ID of the sample.
+    - method: str, method for loading data, options include 'visium' or 'visiumhd', with potential for future extensions.
     
-    返回:
-    - adata: AnnData 对象，包含空间转录组数据。
+    Returns:
+    - adata: AnnData object containing spatial transcriptomics data.
     """
     sample_root = Path(sample_root)
     
