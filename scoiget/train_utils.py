@@ -265,7 +265,7 @@ def train_scoiget(data, original_dim, intermediate_dim, latent_dim, max_cp, kl_w
     # Save the model and plot the loss curve
     if save_path:
         os.makedirs(save_path, exist_ok=True)
-        torch.save(model.state_dict(), os.path.join(ssave_path, "scoiget_model.pth"))
+        torch.save(model.state_dict(), os.path.join(save_path, "scoiget_model.pth"))
         print(f"Model saved to {os.path.join(save_path, 'scoiget_model.pth')}")
     
     plt.figure(figsize=(8, 6), constrained_layout=True)
