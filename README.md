@@ -126,6 +126,11 @@ Before running, please download the compressed folder of the ```Dataset``` from 
 
 Then, you can follow the ```tutorial/example_tutorial.ipynb``` to run SCOIGET.  *Enjoy your explorations!*
 
+## 📜 Citation
+
+If you find this code or analysis useful, please cite our manuscript:
+
+> Zhang, Yujia, et al. "Toward Graph-Based Decoding of Tumor Evolution: Spatial Inference of Copy Number Variations." Diagnostics 15.24 (2025): 3169.
 
 &nbsp; 
 ## License
